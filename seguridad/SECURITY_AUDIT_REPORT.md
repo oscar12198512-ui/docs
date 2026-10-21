@@ -57,12 +57,12 @@ DEPLOY RECOMENDADO: SÍ (DESPLIEGUE APROBADO)
 ### 🟢 HALLAZGOS MEDIOS MITIGADOS
 
 #### 3. MED-01: Suplantación de Rol en Modo Fallback del Cliente Web
-- **Archivo / Componente:** [authClient.ts](file:///c:/Users/Admin/OneDrive/Desktop/megaproyecto-fintech-esqueleto/megaproyecto-fintech/packages/ui/src/authClient.ts#L80-L105)
+- **Archivo / Componente:** [authClient.ts](file:///c:/Users/Admin/OneDrive/Desktop/megaproyecto-fintech-esqueleto/megaproyecto-fintech/packages/ui/src/authClient.ts), [MerchantViews.tsx](file:///c:/Users/Admin/OneDrive/Desktop/megaproyecto-fintech-esqueleto/megaproyecto-fintech/apps/portal-comercios/src/views/MerchantViews.tsx), [panel-admin/App.tsx](file:///c:/Users/Admin/OneDrive/Desktop/megaproyecto-fintech-esqueleto/megaproyecto-fintech/apps/panel-admin/src/App.tsx) y [portal-comercios/App.tsx](file:///c:/Users/Admin/OneDrive/Desktop/megaproyecto-fintech-esqueleto/megaproyecto-fintech/apps/portal-comercios/src/App.tsx)
 - **Fase:** FASE 3 — Arquitectura y FASE 4 — Autenticación
 - **Nivel de Riesgo:** 🟢 **RESUELTO Y VERIFICADO** (Antes 🟠 MEDIO)
-- **Estado de Corrección:** ✅ Mitigado con éxito. Se eliminó la generación de sesiones simuladas y asignación dinámica de roles (`ADMIN`, `MERCHANT_OWNER`) en el cliente. Ante cualquier fallo de red o servidor caído, el cliente lanza un error estricto de conexión, garantizando el principio de Zero Trust.
+- **Estado de Corrección:** ✅ Mitigado con éxito. Se eliminó la generación de sesiones simuladas y asignación dinámica de roles (`ADMIN`, `MERCHANT_OWNER`) en el cliente. En `MerchantViews.tsx` se removió el fallback offline que otorgaba `MERCHANT_OWNER` con datos falsos. Los logouts de `panel-admin` y `portal-comercios` se migraron a `authApi.logout()`. Ante cualquier fallo de red o servidor caído, el cliente lanza un error estricto de conexión, garantizando el principio de Zero Trust.
 - **Descripción Original del Problema:**
-  En `packages/ui/src/authClient.ts`, el método `login` contenía un bloque `catch` que, ante un fallo de red (`Failed to fetch`), generaba una sesión simulada en memoria asignando roles basándose en la cadena del correo ingresado.
+  En `packages/ui/src/authClient.ts` y en `MerchantViews.tsx`, ante un fallo de red (`Failed to fetch`), se generaban sesiones simuladas en memoria asignando roles privilegiados (`ADMIN` o `MERCHANT_OWNER`). Además, existían llamadas directas `fetch('http://localhost:4000/api/v1/auth/logout')` con URLs cableadas.
 
 ---
 
