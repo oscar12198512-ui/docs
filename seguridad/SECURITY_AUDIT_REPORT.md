@@ -33,10 +33,10 @@ DEPLOY RECOMENDADO: SÍ (DESPLIEGUE APROBADO)
 ### 🟢 HALLAZGOS CRÍTICOS MITIGADOS (DESBLOQUEADORES DE PRODUCCIÓN)
 
 #### 1. CRÍT-01: Ausencia de Rate Limiting en Endpoints de Autenticación
-- **Archivo / Componente:** [app.ts](file:///c:/Users/Admin/OneDrive/Desktop/megaproyecto-fintech-esqueleto/megaproyecto-fintech/services/api/src/app.ts#L20-L75) y [auth.routes.ts](file:///c:/Users/Admin/OneDrive/Desktop/megaproyecto-fintech-esqueleto/megaproyecto-fintech/services/api/src/modules/auth/auth.routes.ts#L30-L56)
+- **Archivo / Componente:** [app.ts](file:///c:/Users/Admin/OneDrive/Desktop/megaproyecto-fintech-esqueleto/megaproyecto-fintech/services/api/src/app.ts), [auth.routes.ts](file:///c:/Users/Admin/OneDrive/Desktop/megaproyecto-fintech-esqueleto/megaproyecto-fintech/services/api/src/modules/auth/auth.routes.ts) y [rate-limit.test.ts](file:///c:/Users/Admin/OneDrive/Desktop/megaproyecto-fintech-esqueleto/megaproyecto-fintech/services/api/src/modules/auth/rate-limit.test.ts)
 - **Fase:** FASE 5 — APIs, Functions y Endpoints
 - **Nivel de Riesgo:** 🟢 **RESUELTO Y VERIFICADO** (Antes 🔴 CRÍTICO)
-- **Estado de Corrección:** ✅ Mitigado con éxito. Se instaló `@fastify/rate-limit`, se registró protección global (60 req/min) en `app.ts` y restricción estricta (5 req/min) en `/login`, `/register`, `/forgot-password` y `/reset-password` en `auth.routes.ts`. Verificado con suite de 58 pruebas unitarias e integración en Vitest.
+- **Estado de Corrección:** ✅ Mitigado con éxito y verificado empíricamente. Se instaló `@fastify/rate-limit`, se registró protección global (60 req/min) en `app.ts` y restricción estricta (5 req/min) en `/login`, `/register`, `/forgot-password` y `/reset-password` en `auth.routes.ts`. Se corrigió el mapeo de `app.setErrorHandler` para retornar `error: TOO_MANY_REQUESTS`. Verificado con suite automatizada dedicada (`rate-limit.test.ts`) donde exactamente el 6to intento recibe HTTP 429 con headers `x-ratelimit-remaining: 0`.
 - **Descripción Original del Problema:**
   El servidor Fastify no tenía registrado `@fastify/rate-limit`. Los endpoints críticos `/api/v1/auth/login`, `/api/v1/auth/register` y `/api/v1/auth/forgot-password` admitían un volumen ilimitado de peticiones por segundo desde la misma IP.
 - **Impacto Previo:** Posible denegación de servicio de CPU (agotamiento por hashes `scrypt` concurrentes) y ataques de diccionario a gran escala.
@@ -44,10 +44,10 @@ DEPLOY RECOMENDADO: SÍ (DESPLIEGUE APROBADO)
 ---
 
 #### 2. CRÍT-02: Base de Datos Supabase Expuesta sin Row Level Security (RLS)
-- **Archivo / Componente:** [database/migrations/006_enable_row_level_security.sql](file:///c:/Users/Admin/OneDrive/Desktop/megaproyecto-fintech-esqueleto/megaproyecto-fintech/database/migrations/006_enable_row_level_security.sql) y [.env](file:///c:/Users/Admin/OneDrive/Desktop/megaproyecto-fintech-esqueleto/.env#L1)
+- **Archivo / Componente:** [database/migrations/006_enable_row_level_security.sql](file:///c:/Users/Admin/OneDrive/Desktop/megaproyecto-fintech-esqueleto/megaproyecto-fintech/database/migrations/006_enable_row_level_security.sql) y [scripts/verify-rls.ts](file:///c:/Users/Admin/OneDrive/Desktop/megaproyecto-fintech-esqueleto/megaproyecto-fintech/scripts/verify-rls.ts)
 - **Fase:** FASE 2 — Seguridad de Base de Datos (Supabase)
 - **Nivel de Riesgo:** 🟢 **RESUELTO Y VERIFICADO** (Antes 🔴 CRÍTICO)
-- **Estado de Corrección:** ✅ Mitigado con éxito. Se creó y ejecutó la migración `006_enable_row_level_security.sql` directamente sobre la base de datos conectada en Supabase. Se habilitó `ALTER TABLE ... ENABLE ROW LEVEL SECURITY` en las 17 tablas del esquema `public` y se revocaron todos los permisos de acceso de los roles `anon` y `authenticated` en Supabase PostgREST.
+- **Estado de Corrección:** ✅ Mitigado y auditado en vivo contra la base de datos de Supabase. Se aplicó `ALTER TABLE ... ENABLE ROW LEVEL SECURITY` en las 20 tablas del esquema `public`, se revocaron los permisos directos a los roles `anon` y `authenticated`, y se ejecutó `ALTER DEFAULT PRIVILEGES` para inmunizar tablas futuras. Verificado mediante `npm run verify:rls`, confirmando `rowsecurity = true` en el 100% de tablas y 0 privilegios para roles anónimos.
 - **Descripción Original del Problema:**
   Las tablas se creaban en el esquema `public` sin Row Level Security, lo que permitía que la API PostgREST automática de Supabase las expusiera al público mediante la anon key.
 - **Impacto Previo:** Riesgo de acceso no autorizado y extracción masiva de credenciales y balances a través de la API HTTP de Supabase.
