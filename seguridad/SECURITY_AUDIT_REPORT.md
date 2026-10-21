@@ -75,10 +75,10 @@ DEPLOY RECOMENDADO: SÍ (DESPLIEGUE APROBADO)
 ---
 
 #### 5. MED-03: Validación Segura y Configurable TLS/SSL en PostgreSQL
-- **Archivo / Componente:** [postgres.ts](file:///c:/Users/Admin/OneDrive/Desktop/megaproyecto-fintech-esqueleto/megaproyecto-fintech/services/api/src/common/postgres.ts)
+- **Archivo / Componente:** [postgres.ts](file:///c:/Users/Admin/OneDrive/Desktop/megaproyecto-fintech-esqueleto/megaproyecto-fintech/services/api/src/common/postgres.ts) y [postgres.test.ts](file:///c:/Users/Admin/OneDrive/Desktop/megaproyecto-fintech-esqueleto/megaproyecto-fintech/services/api/src/common/postgres.test.ts)
 - **Fase:** FASE 2 — Base de Datos Render / Supabase
 - **Nivel de Riesgo:** 🟢 **RESUELTO Y VERIFICADO** (Antes 🟠 MEDIO)
-- **Estado de Corrección:** ✅ Mitigado con éxito. Se implementó una configuración TLS/SSL flexible y robusta. Se añadió soporte para `DATABASE_CA_CERT` (contenido en línea o ruta de archivo `.crt`/`.pem`) y `DATABASE_SSL_REJECT_UNAUTHORIZED`. Cuando se provee el certificado CA de Supabase/Render, se aplica `rejectUnauthorized: true` de forma estricta. Ante la ausencia de CA personalizada, se mantiene compatibilidad operativa documentada, evitando la caída del pool de conexiones.
+- **Estado de Corrección:** ✅ Mitigado con éxito. Se implementó una configuración TLS/SSL flexible y robusta a través de la función desacoplada `getPostgresSslConfig()`. Se añadió soporte para `DATABASE_CA_CERT` (contenido en línea o ruta de archivo `.crt`/`.pem`) y `DATABASE_SSL_REJECT_UNAUTHORIZED`. Cuando se provee el certificado CA de Supabase/Render, se aplica `rejectUnauthorized: true` de forma estricta. Verificado mediante suite de pruebas automatizadas dedicada (`postgres.test.ts`) con 6 casos de prueba (100% de aprobación).
 - **Descripción Original del Problema:**
   En `postgres.ts`, la conexión SSL forzaba `{ rejectUnauthorized: false }` de forma fija para todos los entornos de nube.
 
