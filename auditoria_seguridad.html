@@ -348,18 +348,18 @@
       </div>
       <div class="stat-card med">
         <h3>Hallazgos Medios</h3>
-        <div class="val">5</div>
-        <div class="desc">Mixed Content, TLS bypass, Fallback bypass</div>
+        <div class="val">3</div>
+        <div class="desc">TLS bypass, Password reset dispatch, Tinypool</div>
       </div>
       <div class="stat-card pass">
         <h3>Aspectos Aprobados</h3>
-        <div class="val">7</div>
-        <div class="desc">RLS Activo, Rate Limiting, Scrypt, CORS, Git seguro</div>
+        <div class="val">9</div>
+        <div class="desc">Zero Trust, HTTPS Render, RLS Activo, Rate Limiting</div>
       </div>
       <div class="stat-card brand">
         <h3>Nivel de Riesgo Total</h3>
-        <div class="val" style="color: #0284c7;">MEDIO</div>
-        <div class="desc">Aprobado para despliegue y validación</div>
+        <div class="val" style="color: var(--success);">BAJO</div>
+        <div class="desc">Aprobado y listo para producción</div>
       </div>
     </div>
 
@@ -369,7 +369,7 @@
       <div class="matrix-grid">
         <div class="matrix-item">
           <span>🔐 Credenciales y Secretos</span>
-          <span class="badge badge-med">MEDIO</span>
+          <span class="badge badge-ok">OK (PROTEGIDO)</span>
         </div>
         <div class="matrix-item">
           <span>🔐 Base de Datos Firebase</span>
@@ -385,11 +385,11 @@
         </div>
         <div class="matrix-item">
           <span>🔐 Arquitectura de la Aplicación</span>
-          <span class="badge badge-med">MEDIO</span>
+          <span class="badge badge-ok">OK (ZERO TRUST)</span>
         </div>
         <div class="matrix-item">
           <span>🔐 Autenticación y Autorización</span>
-          <span class="badge badge-med">MEDIO</span>
+          <span class="badge badge-ok">OK (VERIFICADO)</span>
         </div>
         <div class="matrix-item">
           <span>🔐 APIs, Functions y Endpoints</span>
@@ -441,50 +441,36 @@
       </div>
 
       <!-- MED 1 -->
-      <div class="finding-card">
+      <div class="finding-card" style="border-left: 4px solid var(--success);">
         <div class="finding-header">
           <div class="finding-title-group">
-            <h3>🟠 MED-01: Bypass de Rol en Modo Fallback del Cliente Web</h3>
-            <div class="finding-fp">packages/ui/src/authClient.ts:93 | Fase 3 & Fase 4</div>
+            <h3>🟢 MED-01: Eliminación de Bypass de Rol en Cliente Web</h3>
+            <div class="finding-fp">packages/ui/src/authClient.ts:80-105 | Fase 3 & Fase 4</div>
           </div>
-          <span class="badge badge-med">MEDIO</span>
+          <span class="badge badge-ok">RESUELTO Y VERIFICADO</span>
         </div>
         <p class="finding-desc">
-          Si el backend no está disponible o falla la conexión, <code>authClient.ts</code> otorga privilegios de <code>ADMIN</code> o <code>MERCHANT_OWNER</code> en la memoria del navegador según el texto del correo: <code>role: dto.email.includes('admin') ? 'ADMIN' : ...</code>. Esto permite que un visitante desbloquee interfaces administrativas restringidas en el frontend simplemente forzando un error de red.
+          <strong>Estado: MITIGADO.</strong> Se eliminó por completo la asignación de roles simulados en memoria (<code>ADMIN</code>, <code>MERCHANT_OWNER</code>) ante fallos de red. Ante desconexión o indisponibilidad del backend, el cliente lanza un error estricto de conexión, bloqueando el acceso visual a pantallas restringidas.
         </p>
-        <div class="code-box">
-// packages/ui/src/authClient.ts:93
-user: {
-  id: 'usr-demo-01',
-  role: dto.email.includes('admin') ? 'ADMIN' : dto.email.includes('comercio') ? 'MERCHANT_OWNER' : 'CLIENT',
-  ...
-}
-        </div>
-        <div class="remedy-box">
-          <strong>Plan de Corrección Recomendado:</strong> Deshabilitar la concesión dinámica de roles simulados en el frontend. Ante un fallo de red, retornar un error estricto de conexión sin conceder acceso visual privilegiado.
+        <div class="remedy-box" style="background: rgba(16, 185, 129, 0.08); border-color: rgba(16, 185, 129, 0.3); color: #065f46;">
+          <strong>Validación de Seguridad:</strong> Cumplimiento estricto del principio de Zero Trust en el frontend.
         </div>
       </div>
 
       <!-- MED 2 -->
-      <div class="finding-card">
+      <div class="finding-card" style="border-left: 4px solid var(--success);">
         <div class="finding-header">
           <div class="finding-title-group">
-            <h3>🟠 MED-02: Configuración Insegura de API_BASE_URL (Mixed Content en Producción)</h3>
-            <div class="finding-fp">packages/ui/src/authClient.ts:10-12 | Fase 1 & Fase 3</div>
+            <h3>🟢 MED-02: Configuración Segura de API_BASE_URL (Prevención Mixed Content)</h3>
+            <div class="finding-fp">packages/ui/src/authClient.ts:10-24 | Fase 1 & Fase 3</div>
           </div>
-          <span class="badge badge-med">MEDIO</span>
+          <span class="badge badge-ok">RESUELTO Y VERIFICADO</span>
         </div>
         <p class="finding-desc">
-          <code>authClient.ts</code> ignora la variable de entorno <code>VITE_API_URL</code> y calcula la API con <code>http://${window.location.hostname}:4000</code>. En Render bajo HTTPS, el navegador bloqueará todas las peticiones por <strong>Mixed Content</strong> (HTTPS consumiendo HTTP no cifrado) y el puerto 4000 estará inaccesible.
+          <strong>Estado: MITIGADO.</strong> Se configuró <code>getApiBaseUrl()</code> para priorizar <code>VITE_API_URL</code> y enrutar las peticiones HTTPS a <code>https://megaproyecto-fintech-api.onrender.com</code>, eliminando el riesgo de bloqueo por Mixed Content y asegurando el canal cifrado en producción.
         </p>
-        <div class="code-box">
-// packages/ui/src/authClient.ts:10-12
-const API_BASE_URL = typeof window !== 'undefined' && window.location.hostname
-  ? `http://${window.location.hostname}:4000` // Incompatible con HTTPS Render
-  : 'http://localhost:4000';
-        </div>
-        <div class="remedy-box">
-          <strong>Plan de Corrección Recomendado:</strong> Usar <code>(typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_URL) || 'http://localhost:4000'</code> para enlazar con la URL HTTPS real del backend desplegado en Render.
+        <div class="remedy-box" style="background: rgba(16, 185, 129, 0.08); border-color: rgba(16, 185, 129, 0.3); color: #065f46;">
+          <strong>Validación de Seguridad:</strong> Tráfico cliente-servidor cifrado de extremo a extremo sin caídas por puertos cerrados.
         </div>
       </div>
 

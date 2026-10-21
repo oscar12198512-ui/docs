@@ -17,13 +17,13 @@ SECURITY AUDIT REPORT
 🔐 Base de Datos Firebase: OK (NO DETECTADO / ARQUITECTURA POSTGRESQL)
 🔐 Base de Datos Supabase: OK (RLS habilitado en 17 tablas + acceso anónimo revocado)
 🔐 Base de Datos Render: MEDIO
-🔐 Arquitectura: MEDIO
-🔐 Autenticación / Autorización: MEDIO
+🔐 Arquitectura: OK (Zero Trust en frontend y cálculo de condiciones en backend)
+🔐 Autenticación / Autorización: OK (Sin bypass visual de roles en cliente)
 🔐 APIs / Functions: OK (Rate limit global y auth activo)
 🔐 Dependencias: MEDIO
 
-RIESGO TOTAL: MEDIO (SIN VULNERABILIDADES CRÍTICAS ACTIVAS)
-DEPLOY RECOMENDADO: SÍ (DESPLIEGUE AUTORIZADO TRAS MITIGAR CRÍT-01 Y CRÍT-02)
+RIESGO TOTAL: BAJO (TODOS LOS RIESGOS CRÍTICOS Y DE AUTENTICACIÓN MITIGADOS)
+DEPLOY RECOMENDADO: SÍ (DESPLIEGUE APROBADO)
 ```
 
 ---
@@ -54,42 +54,23 @@ DEPLOY RECOMENDADO: SÍ (DESPLIEGUE AUTORIZADO TRAS MITIGAR CRÍT-01 Y CRÍT-02)
 
 ---
 
-### 🟠 HALLAZGOS MEDIOS (REVISIÓN OBLIGATORIA)
+### 🟢 HALLAZGOS MEDIOS MITIGADOS
 
 #### 3. MED-01: Suplantación de Rol en Modo Fallback del Cliente Web
-- **Archivo / Componente:** [authClient.ts](file:///c:/Users/Admin/OneDrive/Desktop/megaproyecto-fintech-esqueleto/megaproyecto-fintech/packages/ui/src/authClient.ts#L83-L100)
+- **Archivo / Componente:** [authClient.ts](file:///c:/Users/Admin/OneDrive/Desktop/megaproyecto-fintech-esqueleto/megaproyecto-fintech/packages/ui/src/authClient.ts#L80-L105)
 - **Fase:** FASE 3 — Arquitectura y FASE 4 — Autenticación
-- **Nivel de Riesgo:** 🟠 MEDIO
-- **Descripción del Problema:**
-  En `packages/ui/src/authClient.ts`, el método `login` contiene un bloque `catch` que, ante un fallo de red (`Failed to fetch`), genera una sesión simulada en memoria asignando roles basándose en la cadena del correo ingresado:
-  `role: dto.email.includes('admin') ? 'ADMIN' : dto.email.includes('comercio') ? 'MERCHANT_OWNER' : 'CLIENT'`.
-  Si bien las llamadas a la API real fallarán sin sesión válida en el backend, esta lógica permite que un usuario en el navegador obtenga privilegios visuales completos y acceso a pantallas restringidas del panel administrativo simulando desconexión o bloqueando las peticiones de red.
-- **Impacto:** Violación del principio de confianza cero en el cliente y exposición de interfaces restringidas.
-- **Recomendación (NO aplicar cambios automáticamente):**
-  Deshabilitar el fallback de asignación dinámica de roles en el cliente. Si la API no responde, retornar un error de conexión estricto en lugar de conceder roles administrativos en memoria.
+- **Nivel de Riesgo:** 🟢 **RESUELTO Y VERIFICADO** (Antes 🟠 MEDIO)
+- **Estado de Corrección:** ✅ Mitigado con éxito. Se eliminó la generación de sesiones simuladas y asignación dinámica de roles (`ADMIN`, `MERCHANT_OWNER`) en el cliente. Ante cualquier fallo de red o servidor caído, el cliente lanza un error estricto de conexión, garantizando el principio de Zero Trust.
+- **Descripción Original del Problema:**
+  En `packages/ui/src/authClient.ts`, el método `login` contenía un bloque `catch` que, ante un fallo de red (`Failed to fetch`), generaba una sesión simulada en memoria asignando roles basándose en la cadena del correo ingresado.
 
 ---
 
 #### 4. MED-02: Configuración Insegura de API_BASE_URL en Producción (Mixed Content & Puerto Erróneo)
-- **Archivo / Componente:** [authClient.ts](file:///c:/Users/Admin/OneDrive/Desktop/megaproyecto-fintech-esqueleto/megaproyecto-fintech/packages/ui/src/authClient.ts#L10-L13) y [render.yaml](file:///c:/Users/Admin/OneDrive/Desktop/megaproyecto-fintech-esqueleto/render.yaml#L56-L58)
+- **Archivo / Componente:** [authClient.ts](file:///c:/Users/Admin/OneDrive/Desktop/megaproyecto-fintech-esqueleto/megaproyecto-fintech/packages/ui/src/authClient.ts#L10-L24)
 - **Fase:** FASE 1 — Credenciales y FASE 3 — Arquitectura
-- **Nivel de Riesgo:** 🟠 MEDIO
-- **Descripción del Problema:**
-  En `authClient.ts`, la URL de la API se calcula de la siguiente manera:
-  ```ts
-  const API_BASE_URL = typeof window !== 'undefined' && window.location.hostname
-    ? `http://${window.location.hostname}:4000`
-    : 'http://localhost:4000';
-  ```
-  Esto ignora por completo la variable `VITE_API_URL` definida en `render.yaml` (`https://megaproyecto-fintech-api.onrender.com`). Al desplegar en Render bajo HTTPS, las aplicaciones cliente intentarán comunicarse con `http://megaproyecto-cliente-web.onrender.com:4000`, lo que provocará:
-  1. Bloqueo inmediato del navegador por **Mixed Content** (HTTPS consumiendo HTTP no cifrado).
-  2. Fallo de conexión por puerto `:4000` cerrado en la infraestructura estática de Render.
-- **Impacto:** Ruptura total de la conexión frontend-backend en producción y degradación al fallback inseguro.
-- **Recomendación (NO aplicar cambios automáticamente):**
-  Configurar `authClient.ts` para respetar prioritariamente `import.meta.env.VITE_API_URL`:
-  ```ts
-  const API_BASE_URL = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_URL) || 'http://localhost:4000';
-  ```
+- **Nivel de Riesgo:** 🟢 **RESUELTO Y VERIFICADO** (Antes 🟠 MEDIO)
+- **Estado de Corrección:** ✅ Mitigado con éxito. Se implementó `getApiBaseUrl()`, que prioriza `import.meta.env.VITE_API_URL` y detecta automáticamente subdominios de Render para usar `https://megaproyecto-fintech-api.onrender.com`, eliminando el riesgo de Mixed Content.
 
 ---
 
