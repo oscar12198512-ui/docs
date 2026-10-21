@@ -95,16 +95,18 @@ DEPLOY RECOMENDADO: SÍ (DESPLIEGUE APROBADO)
 
 ---
 
-#### 7. MED-05: Implementación de Cabeceras HTTP de Seguridad
-- **Archivo / Componente:** [app.ts](file:///c:/Users/Admin/OneDrive/Desktop/megaproyecto-fintech-esqueleto/megaproyecto-fintech/services/api/src/app.ts)
+#### 7. MED-05: Implementación de Cabeceras HTTP de Seguridad (Helmet / CSP / HSTS)
+- **Archivo / Componente:** [app.ts](file:///c:/Users/Admin/OneDrive/Desktop/megaproyecto-fintech-esqueleto/megaproyecto-fintech/services/api/src/app.ts) y [health.test.ts](file:///c:/Users/Admin/OneDrive/Desktop/megaproyecto-fintech-esqueleto/megaproyecto-fintech/services/api/src/modules/health/health.test.ts)
 - **Fase:** FASE 5 — APIs y Endpoints
 - **Nivel de Riesgo:** 🟢 **RESUELTO Y VERIFICADO** (Antes 🟠 MEDIO)
-- **Estado de Corrección:** ✅ Mitigado con éxito. Se registró el hook global `onSend` en `app.ts` inyectando automáticamente:
-  - `X-Content-Type-Options: nosniff` (Previene ataques de MIME sniffing)
-  - `X-Frame-Options: DENY` (Protección contra Clickjacking)
-  - `X-XSS-Protection: 1; mode=block` (Filtro XSS)
-  - `Referrer-Policy: strict-origin-when-cross-origin`
-  - `Strict-Transport-Security: max-age=31536000; includeSubDomains` (HSTS en producción)
+- **Estado de Corrección:** ✅ Mitigado con éxito. Se instaló y registró `@fastify/helmet` con directivas completas y estrictas en `app.ts`:
+  - `Content-Security-Policy`: Restricción estricta (`default-src 'self'`, `frame-ancestors 'none'`, `object-src 'none'`).
+  - `Strict-Transport-Security`: `max-age=31536000; includeSubDomains; preload` (HSTS estricto para transporte HTTPS seguro).
+  - `X-Frame-Options: DENY`: Mitigación completa de ataques de Clickjacking.
+  - `X-Content-Type-Options: nosniff`: Protección contra ataques de MIME-type sniffing.
+  - `Referrer-Policy: strict-origin-when-cross-origin`: Privacidad en navegación y referencias salientes.
+  - `crossOriginResourcePolicy: { policy: 'cross-origin' }`: Compatibilidad para consumo legítimo desde los portales web frontends.
+  Verificado mediante prueba unitaria automatizada dedicada en `health.test.ts` que valida empíricamente la presencia y valor de cada cabecera.
 
 ---
 
