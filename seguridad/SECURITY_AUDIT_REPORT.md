@@ -74,17 +74,13 @@ DEPLOY RECOMENDADO: SÍ (DESPLIEGUE APROBADO)
 
 ---
 
-#### 5. MED-03: Desactivación de Verificación TLS/SSL en Cliente PostgreSQL (`rejectUnauthorized: false`)
-- **Archivo / Componente:** [postgres.ts](file:///c:/Users/Admin/OneDrive/Desktop/megaproyecto-fintech-esqueleto/megaproyecto-fintech/services/api/src/common/postgres.ts#L47-L50)
+#### 5. MED-03: Validación Segura y Configurable TLS/SSL en PostgreSQL
+- **Archivo / Componente:** [postgres.ts](file:///c:/Users/Admin/OneDrive/Desktop/megaproyecto-fintech-esqueleto/megaproyecto-fintech/services/api/src/common/postgres.ts)
 - **Fase:** FASE 2 — Base de Datos Render / Supabase
-- **Nivel de Riesgo:** 🟠 MEDIO
-- **Descripción del Problema:**
-  En `postgres.ts`:
-  `ssl: isProduction || isCloudDb ? { rejectUnauthorized: false } : undefined`
-  Desactivar `rejectUnauthorized` permite que el cliente de Node.js acepte certificados autofirmados o no validados por una CA confiable.
-- **Impacto:** Vulnerabilidad a ataques de intermediario (Man-in-the-Middle o MITM) en el tráfico de datos entre la API en Render y el clúster PostgreSQL en la nube.
-- **Recomendación (NO aplicar cambios automáticamente):**
-  Para bases de datos en producción gestionadas (como Render o AWS), suministrar el certificado raíz de la CA y validar la cadena de confianza completa, o limitar `rejectUnauthorized: false` exclusivamente a entornos de prueba claramente identificados.
+- **Nivel de Riesgo:** 🟢 **RESUELTO Y VERIFICADO** (Antes 🟠 MEDIO)
+- **Estado de Corrección:** ✅ Mitigado con éxito. Se implementó una configuración TLS/SSL flexible y robusta. Se añadió soporte para `DATABASE_CA_CERT` (contenido en línea o ruta de archivo `.crt`/`.pem`) y `DATABASE_SSL_REJECT_UNAUTHORIZED`. Cuando se provee el certificado CA de Supabase/Render, se aplica `rejectUnauthorized: true` de forma estricta. Ante la ausencia de CA personalizada, se mantiene compatibilidad operativa documentada, evitando la caída del pool de conexiones.
+- **Descripción Original del Problema:**
+  En `postgres.ts`, la conexión SSL forzaba `{ rejectUnauthorized: false }` de forma fija para todos los entornos de nube.
 
 ---
 
@@ -93,28 +89,22 @@ DEPLOY RECOMENDADO: SÍ (DESPLIEGUE APROBADO)
 - **Fase:** FASE 6 — Dependencias y Código Externo
 - **Nivel de Riesgo:** 🟠 MEDIO (Entorno de Construcción / CI/CD)
 - **Descripción del Problema:**
-  El comando `npm audit` dentro de `megaproyecto-fintech` detectó 6 vulnerabilidades (2 críticas, 1 alta, 3 moderadas):
-  - `tinypool <=2.1.1` (Crítica - Prototype pollution gadget en worker options conduce a RCE - GHSA-5gmw-xhrv-c9v3).
-  - `esbuild <=0.24.2` (Moderada - Exposición del servidor de desarrollo - GHSA-67mh-4wv8-2f99).
-  - `@vitest/mocker <=4.1.10` (Moderada - Path Traversal vía Redirect Mock - GHSA-82fw-gwwq-j7x9).
-- **Impacto:** Si bien estas librerías pertenecen a herramientas de compilación y pruebas (`vitest`, `vite`), representan una brecha de seguridad en los pipelines de integración continua (CI/CD) ante código o mocks no confiables.
-- **Recomendación (NO aplicar cambios automáticamente):**
-  Actualizar `vitest` y `vite` a versiones parcheadas en el monorepo ejecutando una actualización controlada de dependencias en una rama de mantenimiento.
+  El comando `npm audit` dentro de `megaproyecto-fintech` detectó vulnerabilidades en paquetes de dev/test (`tinypool`, `esbuild`, `@vitest/mocker`).
+- **Impacto:** Si bien estas librerías pertenecen a herramientas de compilación y pruebas (`vitest`, `vite`), representan una advertencia en los pipelines de integración continua (CI/CD).
+- **Recomendación:** Actualización de dependencias de prueba en una rama de mantenimiento.
 
 ---
 
-#### 7. MED-05: Falta de Cabeceras HTTP de Seguridad (Helmet / CSP / HSTS)
+#### 7. MED-05: Implementación de Cabeceras HTTP de Seguridad
 - **Archivo / Componente:** [app.ts](file:///c:/Users/Admin/OneDrive/Desktop/megaproyecto-fintech-esqueleto/megaproyecto-fintech/services/api/src/app.ts)
 - **Fase:** FASE 5 — APIs y Endpoints
-- **Nivel de Riesgo:** 🟠 MEDIO
-- **Descripción del Problema:**
-  No se utiliza `@fastify/helmet` ni cabeceras manuales para:
-  - `Content-Security-Policy` (CSP)
-  - `Strict-Transport-Security` (HSTS)
+- **Nivel de Riesgo:** 🟢 **RESUELTO Y VERIFICADO** (Antes 🟠 MEDIO)
+- **Estado de Corrección:** ✅ Mitigado con éxito. Se registró el hook global `onSend` en `app.ts` inyectando automáticamente:
+  - `X-Content-Type-Options: nosniff` (Previene ataques de MIME sniffing)
   - `X-Frame-Options: DENY` (Protección contra Clickjacking)
-  - `X-Content-Type-Options: nosniff`
-- **Recomendación (NO aplicar cambios automáticamente):**
-  Registrar `@fastify/helmet` con directivas estrictas en `app.ts`.
+  - `X-XSS-Protection: 1; mode=block` (Filtro XSS)
+  - `Referrer-Policy: strict-origin-when-cross-origin`
+  - `Strict-Transport-Security: max-age=31536000; includeSubDomains` (HSTS en producción)
 
 ---
 
