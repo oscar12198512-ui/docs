@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Megaproyecto FinTech - Masterclass Audiovisual</title>
+  <style>
+    :root {
+      --bg: #070b12;
+      --card-bg: rgba(15, 23, 42, 0.85);
+      --emerald: #10b981;
+      --cyan: #06b6d4;
+      --gold: #f59e0b;
+      --purple: #8b5cf6;
+      --text: #f3f4f6;
+      --muted: #9ca3af;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    body {
+      background: #000;
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      overflow-x: hidden;
+      padding: 10px;
+    }
+    .video-viewport {
+      width: 100%;
+      max-width: 1100px;
+      aspect-ratio: 16 / 9;
+      background: radial-gradient(circle at 50% 20%, #111e30 0%, #05080e 100%);
+      border: 2px solid rgba(16, 185, 129, 0.4);
+      border-radius: 16px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 0 50px rgba(16, 185, 129, 0.25);
+    }
+    /* TOP HUD */
+    .top-hud {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 20px;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      z-index: 10;
+    }
+    .rec-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: #ef4444;
+    }
+    .rec-dot {
+      width: 12px;
+      height: 12px;
+      background: #ef4444;
+      border-radius: 50%;
+      box-shadow: 0 0 10px #ef4444;
+      animation: pulse 1s infinite;
+    }
+    @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.3; transform: scale(0.8); } }
+    .title-badge {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #38bdf8;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    .tech-specs {
+      font-family: monospace;
+      font-size: 0.8rem;
+      color: var(--emerald);
+    }
+    /* SCENE DISPLAY */
+    .scene-viewport {
+      flex: 1;
+      padding: 30px 40px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      position: relative;
+      transition: all 0.4s ease-in-out;
+    }
+    .scene-tag {
+      font-size: 0.75rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: var(--emerald);
+      margin-bottom: 8px;
+      display: inline-block;
+    }
+    .scene-title {
+      font-size: 1.85rem;
+      font-weight: 800;
+      line-height: 1.2;
+      margin-bottom: 12px;
+      background: linear-gradient(90deg, #ffffff, #93c5fd);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .scene-desc {
+      font-size: 0.95rem;
+      color: var(--muted);
+      line-height: 1.5;
+      max-width: 800px;
+      margin-bottom: 20px;
+    }
+    /* WIDGETS GRID */
+    .widgets-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      max-width: 900px;
+    }
+    .widget-card {
+      background: rgba(16, 24, 39, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 10px;
+      padding: 12px 14px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+      border-left: 3px solid var(--emerald);
+      transform: translateY(0);
+      transition: all 0.3s;
+    }
+    .widget-card h4 {
+      font-size: 0.7rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+    .widget-card p {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #38bdf8;
+    }
+    /* LOWER THIRD / VOICE OVER SUBTITLES */
+    .lower-third {
+      background: rgba(7, 11, 18, 0.95);
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 14px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      z-index: 10;
+    }
+    .speaker-label {
+      font-size: 0.7rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--gold);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .subtitle-text {
+      font-size: 1rem;
+      font-weight: 500;
+      color: #fff;
+      line-height: 1.4;
+      min-height: 44px;
+    }
+    /* TIMELINE SCRUBBER */
+    .controls-bar {
+      background: #04060a;
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #fff;
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    .btn:hover { background: var(--emerald); color: #000; border-color: var(--emerald); }
+    .btn-play { background: var(--emerald); color: #000; border: none; padding: 8px 18px; }
+    .timeline-track {
+      flex: 1;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 3px;
+      position: relative;
+      cursor: pointer;
+    }
+    .timeline-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--emerald), var(--cyan));
+      border-radius: 3px;
+      width: 0%;
+      transition: width 0.1s linear;
+    }
+    .timecode-txt {
+      font-family: monospace;
+      font-size: 0.8rem;
+      color: var(--muted);
+      width: 90px;
+      text-align: right;
+    }
+  </style>
+</head>
+<body>
+  <div class="video-viewport" id="videoBox">
+    <!-- TOP HUD -->
+    <div class="top-hud">
+      <div class="rec-badge">
+        <div class="rec-dot"></div>
+        <span>REC MASTER // 4K 60FPS</span>
+      </div>
+      <div class="title-badge" id="hudChapter">ESCENA 01 // OVERVIEW</div>
+      <div class="tech-specs">DOLBY 5.1 | REC.709</div>
+    </div>
+
+    <!-- MAIN SCENE DISPLAY -->
+    <div class="scene-viewport" id="sceneViewport">
+      <span class="scene-tag" id="sceneTag">ESCENA 01 // OVERVIEW</span>
+      <h2 class="scene-title" id="sceneTitle">Megaproyecto FinTech & POS: Arquitectura Integral</h2>
+      <p class="scene-desc" id="sceneDesc">Monorepo TypeScript estricto con npm workspaces. Desacoplamiento total entre frontend de consumidores, portal de comercios, panel de administración y servicios API.</p>
+      
+      <div class="widgets-grid" id="widgetsGrid">
+        <div class="widget-card">
+          <h4>Arquitectura</h4>
+          <p>Monorepo Workspaces</p>
+        </div>
+        <div class="widget-card">
+          <h4>Frontends</h4>
+          <p>3 SPAs (React + Vite)</p>
+        </div>
+        <div class="widget-card">
+          <h4>Backend API</h4>
+          <p>Fastify en Puerto 4000</p>
+        </div>
+        <div class="widget-card">
+          <h4>Seguridad</h4>
+          <p>Cero-Trust & RBAC</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- LOWER THIRD SUBTITLES -->
+    <div class="lower-third">
+      <div class="speaker-label">
+        <span>🎙️ LOCUCIÓN EN OFF (DIRECTOR)</span>
+      </div>
+      <div class="subtitle-text" id="subtitleText">
+        Bienvenidos a la sala de postproducción. En este recorrido te revelaré cómo cada módulo, puerto y línea de código garantizan la integridad de la plataforma.
+      </div>
+    </div>
+
+    <!-- TIMELINE CONTROLS -->
+    <div class="controls-bar">
+      <button class="btn btn-play" id="playBtn">⏸️ PAUSAR</button>
+      <button class="btn" id="prevBtn">⏮️</button>
+      <button class="btn" id="nextBtn">⏭️</button>
+      <div class="timeline-track" id="timelineTrack">
+        <div class="timeline-fill" id="timelineFill"></div>
+      </div>
+      <div class="timecode-txt" id="timecodeTxt">00:00 / 02:48</div>
+    </div>
+  </div>
+
+  <script>
+    const SCENES = [
+      {
+        tag: "ESCENA 01 // OVERVIEW GENERAL",
+        title: "La Bestia FinTech: Arquitectura Monorepo y Módulos",
+        desc: "Un ecosistema financiero integral en TypeScript con npm workspaces: 3 aplicaciones web desacopladas y un núcleo Fastify con tolerancia a fallos.",
+        voice: "Bienvenidos a la sala de postproducción. Lo que ven en pantalla es una plataforma fintech de misión crítica, estructurada en un monorepo TypeScript estricto con tres aplicaciones web y un motor backend Fastify.",
+        widgets: [
+          { label: "Ecosistema", val: "TypeScript Monorepo" },
+          { label: "Frontends", val: "3 SPAs (React + Vite)" },
+          { label: "Backend API", val: "Fastify 4.x (Puerto 4000)" },
+          { label: "Seguridad", val: "Zero-Trust + Logs Pino" }
+        ],
+        duration: 4
+      },
+      {
+        tag: "ESCENA 02 // BACKEND CORE (PUERTO 4000)",
+        title: "Servicios API, Persistencia Atómica y Cero Floats",
+        desc: "13 submódulos independientes: autenticación JWT HttpOnly, redacción estricta en logs Pino (sin filtrar contraseñas ni cédulas) y persistencia transaccional atómica.",
+        voice: "En el puerto 4000 corre el backend Fastify. Su persistencia transaccional atómica garantiza que ningún corte eléctrico corrompa los datos, y todo el dinero se procesa en centavos enteros para eliminar errores de coma flotante.",
+        widgets: [
+          { label: "Motor Local", val: "Atómico (fs.renameSync)" },
+          { label: "Producción Cloud", val: "5 Migraciones PostgreSQL" },
+          { label: "Precisión Monetaria", val: "BigInt (Cero Floats)" },
+          { label: "CORS Restrictivo", val: "Puertos 3000-3002 + Cloud" }
+        ],
+        duration: 4
+      },
+      {
+        tag: "ESCENA 03 // CLIENTE WEB (PUERTO 3000)",
+        title: "Experiencia del Usuario y los 7 Niveles de Crédito",
+        desc: "Catálogo, carrito y el motor de crédito progresivo: de $150 inicial hasta $10,000 en automotriz con plazos de hasta 28 cuotas quincenales / 48 meses y control DTI < 40%.",
+        voice: "En el puerto 3000 tenemos la app del cliente con el motor de 7 niveles de crédito. Desde microcréditos de $150 hasta motos en Nivel 6 con 18 cuotas y autos en Nivel 7 con 28 cuotas quincenales bajo estricta evaluación DTI.",
+        widgets: [
+          { label: "Nivel 1 al 5", val: "Consumo a Emprendedor" },
+          { label: "Nivel 6 (Motos)", val: "Hasta 18 Cuotas (+18 INTT)" },
+          { label: "Nivel 7 (Autos)", val: "Hasta 28 Cuotas Quincenales" },
+          { label: "Control de Riesgo", val: "DTI < 40% + Scoring" }
+        ],
+        duration: 4
+      },
+      {
+        tag: "ESCENA 04 // PORTAL COMERCIOS (PUERTO 3001)",
+        title: "Terminal POS Inteligente, Inventario y Liquidaciones",
+        desc: "El centro operativo de los negocios afiliados: POS en tiempo real para autorizar entregas a crédito, control de stock por sucursal y liquidación bancaria con comisiones deducidas.",
+        voice: "Whip-pan al puerto 3001: el Portal de Comercios. El comerciante recibe la orden a crédito en su POS, valida la cédula del cliente, aprueba la entrega y la plataforma liquida sus ganancias reteniendo la comisión acordada.",
+        widgets: [
+          { label: "Autorizaciones", val: "Validación Cédula / OTP" },
+          { label: "Multi-Sucursal", val: "Inventario segregado" },
+          { label: "Comisiones", val: "Cálculo automático" },
+          { label: "Liquidación", val: "Transferencia Bancaria" }
+        ],
+        duration: 4
+      },
+      {
+        tag: "ESCENA 05 // PANEL ADMIN (PUERTO 3002)",
+        title: "Torre de Control: Aprobación KYC, Riesgo y Auditoría Forense",
+        desc: "Supervisión global de la cartera crediticia (NPL), revisión de expedientes KYC (Dossier Review con cédula, RIF y licencia INTT) y seguridad RBAC validada en servidor.",
+        voice: "Entramos al Panel Administrativo en el puerto 3002. Los oficiales de riesgo analizan el expediente KYC en el Dossier Review y aplican seguridad RBAC que se valida en el servidor, no solo ocultando botones.",
+        widgets: [
+          { label: "Scoring Automático", val: "Capacidad de Endeudamiento" },
+          { label: "KYC Dossier", val: "Revisión documental" },
+          { label: "Seguridad RBAC", val: "Bloqueo estricto no-admins" },
+          { label: "Auditoría", val: "Trazabilidad forense total" }
+        ],
+        duration: 4
+      },
+      {
+        tag: "ESCENA 06 // CONTRATOS CRIPTOGRÁFICOS",
+        title: "Integridad Jurídica: Hashing SHA-256 Inmutable",
+        desc: "Generación de contratos digitales con reserva de dominio y cálculo de hash SHA-256. Verificación pública infalsificable en /api/v1/contracts/:id/verify.",
+        voice: "Una vez aprobada la compra, se genera un contrato digital inmutable con hash SHA-256. Cualquier intento de alterar una sola coma o monto romperá el hash, garantizando transparencia jurídica y bancaria absoluta.",
+        widgets: [
+          { label: "Firma Electrónica", val: "Mensajes de Datos" },
+          { label: "Hash del Snapshot", val: "SHA-256 Criptográfico" },
+          { label: "Verificación", val: "Endpoint público abierto" },
+          { label: "Multi-Tenant", val: "Aislamiento estricto" }
+        ],
+        duration: 4
+      },
+      {
+        tag: "ESCENA 07 // CLOUD RENDER & REGULACIÓN",
+        title: "Despliegue Cloud en Render y Cumplimiento Normativo",
+        desc: "Orquestación IaC mediante render.yaml con 5 servicios (3 SPAs, API Fastify y PostgreSQL 16) alineados con SUDEBAN, SUSCERTE, INTT, SUNDDE y SENIAT.",
+        voice: "Llegamos al corte final. Con el plano render.yaml orquestamos los 5 servicios en la nube en alta disponibilidad. La arquitectura técnica está 100% lista para producción y homologación regulatoria. ¡Corten!",
+        widgets: [
+          { label: "Infraestructura", val: "Render Blueprint IaC" },
+          { label: "Base de Datos", val: "PostgreSQL 16 Gestionada" },
+          { label: "Regulación", val: "SUDEBAN / SUSCERTE / INTT" },
+          { label: "Estado", val: "Listo para Producción" }
+        ],
+        duration: 4
+      }
+    ];
+
+    let currentIdx = 0;
+    let isPlaying = true;
+    let sceneTimer = null;
+    let elapsed = 0;
+    const totalDuration = SCENES.reduce((a, b) => a + b.duration, 0);
+
+    const hudChapter = document.getElementById('hudChapter');
+    const sceneTag = document.getElementById('sceneTag');
+    const sceneTitle = document.getElementById('sceneTitle');
+    const sceneDesc = document.getElementById('sceneDesc');
+    const widgetsGrid = document.getElementById('widgetsGrid');
+    const subtitleText = document.getElementById('subtitleText');
+    const timelineFill = document.getElementById('timelineFill');
+    const timecodeTxt = document.getElementById('timecodeTxt');
+    const playBtn = document.getElementById('playBtn');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+
+    function fmtTime(s) {
+      const m = Math.floor(s / 60);
+      const sec = Math.floor(s % 60);
+      return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+    }
+
+    function renderScene(idx) {
+      currentIdx = idx;
+      const s = SCENES[idx];
+      hudChapter.innerText = s.tag;
+      sceneTag.innerText = s.tag;
+      sceneTitle.innerText = s.title;
+      sceneDesc.innerText = s.desc;
+      subtitleText.innerText = s.voice;
+
+      widgetsGrid.innerHTML = s.widgets.map(w => `
+        <div class="widget-card">
+          <h4>${w.label}</h4>
+          <p>${w.val}</p>
+        </div>
+      `).join('');
+    }
+
+    function tick() {
+      if (!isPlaying) return;
+      elapsed += 0.2;
+      if (elapsed >= totalDuration) {
+        elapsed = totalDuration;
+        isPlaying = false;
+        playBtn.innerText = '▶️ REPRODUCIR';
+      }
+
+      // Find current scene
+      let acc = 0;
+      for (let i = 0; i < SCENES.length; i++) {
+        if (elapsed >= acc && elapsed < acc + SCENES[i].duration) {
+          if (i !== currentIdx) renderScene(i);
+          break;
+        }
+        acc += SCENES[i].duration;
+      }
+
+      const pct = (elapsed / totalDuration) * 100;
+      timelineFill.style.width = `${pct}%`;
+      timecodeTxt.innerText = `${fmtTime(elapsed)} / ${fmtTime(totalDuration)}`;
+    }
+
+    renderScene(0);
+    setInterval(tick, 200);
+
+    playBtn.onclick = () => {
+      isPlaying = !isPlaying;
+      playBtn.innerText = isPlaying ? '⏸️ PAUSAR' : '▶️ REPRODUCIR';
+      if (isPlaying && elapsed >= totalDuration) {
+        elapsed = 0;
+        renderScene(0);
+      }
+    };
+
+    prevBtn.onclick = () => {
+      if (currentIdx > 0) {
+        let acc = 0;
+        for (let i = 0; i < currentIdx - 1; i++) acc += SCENES[i].duration;
+        elapsed = acc;
+        renderScene(currentIdx - 1);
+      }
+    };
+
+    nextBtn.onclick = () => {
+      if (currentIdx < SCENES.length - 1) {
+        let acc = 0;
+        for (let i = 0; i <= currentIdx; i++) acc += SCENES[i].duration;
+        elapsed = acc;
+        renderScene(currentIdx + 1);
+      }
+    };
+  </script>
+</body>
+</html>
