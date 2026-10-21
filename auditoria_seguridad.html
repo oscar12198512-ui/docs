@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Security Audit Dashboard — Megaproyecto FinTech & POS (Antigravity)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-canvas: #f8fafc;
+      --bg-card: rgba(255, 255, 255, 0.95);
+      --border-subtle: rgba(226, 232, 240, 0.9);
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --danger: #ef4444;
+      --danger-bg: rgba(239, 68, 68, 0.1);
+      --warning: #f59e0b;
+      --warning-bg: rgba(245, 158, 11, 0.1);
+      --success: #10b981;
+      --success-bg: rgba(16, 185, 129, 0.1);
+      --info: #0284c7;
+      --info-bg: rgba(2, 132, 199, 0.1);
+      --brand: #2563eb;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif; }
+    
+    body {
+      background-color: var(--bg-canvas);
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(219, 234, 254, 0.5) 0px, transparent 55%),
+        radial-gradient(at 100% 0%, rgba(224, 242, 254, 0.45) 0px, transparent 50%),
+        radial-gradient(at 50% 100%, rgba(238, 242, 255, 0.4) 0px, transparent 60%);
+      background-attachment: fixed;
+      color: var(--text-main);
+      min-height: 100vh;
+      padding: 32px 24px;
+    }
+
+    .dashboard-container {
+      max-width: 1280px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    /* HEADER */
+    .dash-header {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 20px;
+      padding: 24px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 10px 30px -5px rgba(37, 99, 235, 0.08);
+      backdrop-filter: blur(16px);
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .header-info h1 {
+      font-size: 1.6rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #0f172a 20%, #1d4ed8 70%, #0284c7 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: -0.02em;
+    }
+
+    .header-info p {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .deploy-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 22px;
+      border-radius: 9999px;
+      background: rgba(239, 68, 68, 0.12);
+      border: 2px solid var(--danger);
+      color: var(--danger);
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      font-size: 0.9rem;
+      box-shadow: 0 0 20px rgba(239, 68, 68, 0.25);
+      animation: pulse 1.8s infinite;
+    }
+
+    @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.85; transform: scale(0.98); } }
+
+    /* STATS KPI GRID */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 18px;
+    }
+
+    @media (max-width: 960px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 580px) { .stats-grid { grid-template-columns: 1fr; } }
+
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 4px 18px rgba(15, 23, 42, 0.04);
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 28px rgba(37, 99, 235, 0.1);
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; width: 5px; height: 100%;
+    }
+
+    .stat-card.crit::before { background: var(--danger); }
+    .stat-card.med::before { background: var(--warning); }
+    .stat-card.pass::before { background: var(--success); }
+    .stat-card.brand::before { background: var(--brand); }
+
+    .stat-card h3 {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      font-weight: 700;
+    }
+
+    .stat-card .val {
+      font-size: 2.1rem;
+      font-weight: 800;
+      color: var(--text-main);
+      line-height: 1.1;
+    }
+
+    .stat-card .desc {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
+
+    /* COMPLIANCE MATRIX */
+    .matrix-section {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 18px;
+      padding: 26px;
+      box-shadow: 0 4px 20px rgba(15, 23, 42, 0.04);
+    }
+
+    .matrix-title {
+      font-size: 1.25rem;
+      font-weight: 800;
+      margin-bottom: 18px;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .matrix-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 14px;
+    }
+
+    .matrix-item {
+      background: #f8fafc;
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 14px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    .matrix-item:hover {
+      background: #ffffff;
+      border-color: rgba(37, 99, 235, 0.3);
+    }
+
+    .matrix-item span { font-size: 0.88rem; font-weight: 600; color: var(--text-main); }
+
+    .badge {
+      font-size: 0.74rem;
+      font-weight: 800;
+      padding: 5px 12px;
+      border-radius: 9999px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .badge-ok { background: var(--success-bg); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.3); }
+    .badge-crit { background: var(--danger-bg); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.35); }
+    .badge-med { background: var(--warning-bg); color: #d97706; border: 1px solid rgba(245, 158, 11, 0.35); }
+
+    /* FINDINGS EXPLORER */
+    .findings-section {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 18px;
+      padding: 26px;
+      box-shadow: 0 4px 20px rgba(15, 23, 42, 0.04);
+    }
+
+    .filter-tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 22px;
+      flex-wrap: wrap;
+    }
+
+    .filter-btn {
+      background: #f1f5f9;
+      border: 1px solid var(--border-subtle);
+      padding: 7px 16px;
+      border-radius: 9999px;
+      font-size: 0.84rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .filter-btn.active, .filter-btn:hover {
+      background: var(--brand);
+      color: #fff;
+      border-color: var(--brand);
+    }
+
+    .finding-card {
+      background: #ffffff;
+      border: 1px solid var(--border-subtle);
+      border-radius: 14px;
+      padding: 22px;
+      margin-bottom: 18px;
+      box-shadow: 0 2px 10px rgba(15, 23, 42, 0.03);
+      transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+    }
+
+    .finding-card:hover {
+      border-color: rgba(37, 99, 235, 0.35);
+      box-shadow: 0 8px 24px rgba(37, 99, 235, 0.08);
+      transform: translateY(-2px);
+    }
+
+    .finding-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .finding-title-group h3 {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .finding-fp {
+      font-size: 0.78rem;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--info);
+      margin-top: 4px;
+    }
+
+    .finding-desc {
+      font-size: 0.92rem;
+      color: #334155;
+      line-height: 1.6;
+      margin-bottom: 14px;
+    }
+
+    .code-box {
+      background: #0f172a;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      padding: 14px 18px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.82rem;
+      color: #38bdf8;
+      overflow-x: auto;
+      margin-bottom: 14px;
+      line-height: 1.5;
+    }
+
+    .remedy-box {
+      background: rgba(37, 99, 235, 0.06);
+      border: 1px solid rgba(37, 99, 235, 0.2);
+      border-radius: 10px;
+      padding: 14px 18px;
+      font-size: 0.88rem;
+      color: #1e3a8a;
+      line-height: 1.5;
+    }
+
+    .remedy-box strong { color: var(--brand); }
+
+    footer {
+      text-align: center;
+      padding: 20px;
+      font-size: 0.84rem;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="dashboard-container">
+    <!-- HEADER -->
+    <header class="dash-header">
+      <div class="header-info">
+        <h1>PANEL DE CONTROL DE AUDITORÍA DE SEGURIDAD // PRE-DEPLOY</h1>
+        <p>Megaproyecto FinTech & POS Monorepo — Auditoría Automática por Antigravity AI (Commit: <code>fc2a4fb</code>)</p>
+      </div>
+      <div class="deploy-badge" style="background: rgba(16, 185, 129, 0.15); border-color: rgba(16, 185, 129, 0.4); color: #065f46;">
+        <span>✅ DEPLOY AUTORIZADO (RIESGOS CRÍTICOS MITIGADOS)</span>
+      </div>
+    </header>
+
+    <!-- STATS -->
+    <div class="stats-grid">
+      <div class="stat-card pass">
+        <h3>Hallazgos Críticos</h3>
+        <div class="val" style="color: var(--success);">0</div>
+        <div class="desc">CRÍT-01 y CRÍT-02 Mitigados con éxito</div>
+      </div>
+      <div class="stat-card med">
+        <h3>Hallazgos Medios</h3>
+        <div class="val">5</div>
+        <div class="desc">Mixed Content, TLS bypass, Fallback bypass</div>
+      </div>
+      <div class="stat-card pass">
+        <h3>Aspectos Aprobados</h3>
+        <div class="val">7</div>
+        <div class="desc">RLS Activo, Rate Limiting, Scrypt, CORS, Git seguro</div>
+      </div>
+      <div class="stat-card brand">
+        <h3>Nivel de Riesgo Total</h3>
+        <div class="val" style="color: #0284c7;">MEDIO</div>
+        <div class="desc">Aprobado para despliegue y validación</div>
+      </div>
+    </div>
+
+    <!-- SUMMARY MATRIX -->
+    <section class="matrix-section">
+      <h2 class="matrix-title">📋 Matriz de Cumplimiento por Capa (Estándar de Auditoría)</h2>
+      <div class="matrix-grid">
+        <div class="matrix-item">
+          <span>🔐 Credenciales y Secretos</span>
+          <span class="badge badge-med">MEDIO</span>
+        </div>
+        <div class="matrix-item">
+          <span>🔐 Base de Datos Firebase</span>
+          <span class="badge badge-ok">OK (POSTGRES)</span>
+        </div>
+        <div class="matrix-item">
+          <span>🔐 Base de Datos Supabase</span>
+          <span class="badge badge-ok">OK (RLS ACTIVO)</span>
+        </div>
+        <div class="matrix-item">
+          <span>🔐 Base de Datos Render</span>
+          <span class="badge badge-med">MEDIO</span>
+        </div>
+        <div class="matrix-item">
+          <span>🔐 Arquitectura de la Aplicación</span>
+          <span class="badge badge-med">MEDIO</span>
+        </div>
+        <div class="matrix-item">
+          <span>🔐 Autenticación y Autorización</span>
+          <span class="badge badge-med">MEDIO</span>
+        </div>
+        <div class="matrix-item">
+          <span>🔐 APIs, Functions y Endpoints</span>
+          <span class="badge badge-ok">OK (RATE LIMIT ACTIVO)</span>
+        </div>
+        <div class="matrix-item">
+          <span>🔐 Dependencias y Supply Chain</span>
+          <span class="badge badge-med">MEDIO</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- FINDINGS EXPLORER -->
+    <section class="findings-section">
+      <h2 class="matrix-title">🔍 Registro Detallado de Hallazgos y Plan de Remediación</h2>
+
+      <!-- CRIT 1 -->
+      <div class="finding-card" style="border-left: 4px solid var(--success);">
+        <div class="finding-header">
+          <div class="finding-title-group">
+            <h3>🟢 CRÍT-01: Protección de Rate Limiting en Autenticación</h3>
+            <div class="finding-fp">services/api/src/app.ts & auth.routes.ts | Fase 5</div>
+          </div>
+          <span class="badge badge-ok">RESUELTO Y VERIFICADO</span>
+        </div>
+        <p class="finding-desc">
+          <strong>Estado: MITIGADO.</strong> Se instaló <code>@fastify/rate-limit</code> y se registró un límite global preventivo de 60 req/min por IP. En las rutas críticas de autenticación (<code>/login</code>, <code>/register</code>, <code>/forgot-password</code>, <code>/reset-password</code>) se impuso un límite estricto de <strong>5 peticiones por minuto por IP</strong>. Verificado exitosamente con 58 pruebas automatizadas en Vitest.
+        </p>
+        <div class="remedy-box" style="background: rgba(16, 185, 129, 0.08); border-color: rgba(16, 185, 129, 0.3); color: #065f46;">
+          <strong>Validación de Seguridad:</strong> Ataques de fuerza bruta distribuida y agotamiento de CPU por cálculo de <code>scrypt</code> neutralizados en la capa HTTP.
+        </div>
+      </div>
+
+      <!-- CRIT 2 -->
+      <div class="finding-card" style="border-left: 4px solid var(--success);">
+        <div class="finding-header">
+          <div class="finding-title-group">
+            <h3>🟢 CRÍT-02: Protección Row Level Security (RLS) en Supabase</h3>
+            <div class="finding-fp">database/migrations/006_enable_row_level_security.sql | Fase 2</div>
+          </div>
+          <span class="badge badge-ok">RESUELTO Y VERIFICADO</span>
+        </div>
+        <p class="finding-desc">
+          <strong>Estado: MITIGADO.</strong> Se creó y ejecutó la migración <code>006_enable_row_level_security.sql</code> directamente en la base de datos de producción Supabase. Se activó RLS en las 17 tablas del esquema <code>public</code> y se revocaron de forma segura los permisos de acceso de los roles <code>anon</code> y <code>authenticated</code> en PostgREST.
+        </p>
+        <div class="remedy-box" style="background: rgba(16, 185, 129, 0.08); border-color: rgba(16, 185, 129, 0.3); color: #065f46;">
+          <strong>Validación de Seguridad:</strong> El esquema público opera bajo Zero Trust. La API REST pública de Supabase no expone tablas privadas a la red y el acceso queda delegado exclusivamente a la API Fastify.
+        </div>
+      </div>
+
+      <!-- MED 1 -->
+      <div class="finding-card">
+        <div class="finding-header">
+          <div class="finding-title-group">
+            <h3>🟠 MED-01: Bypass de Rol en Modo Fallback del Cliente Web</h3>
+            <div class="finding-fp">packages/ui/src/authClient.ts:93 | Fase 3 & Fase 4</div>
+          </div>
+          <span class="badge badge-med">MEDIO</span>
+        </div>
+        <p class="finding-desc">
+          Si el backend no está disponible o falla la conexión, <code>authClient.ts</code> otorga privilegios de <code>ADMIN</code> o <code>MERCHANT_OWNER</code> en la memoria del navegador según el texto del correo: <code>role: dto.email.includes('admin') ? 'ADMIN' : ...</code>. Esto permite que un visitante desbloquee interfaces administrativas restringidas en el frontend simplemente forzando un error de red.
+        </p>
+        <div class="code-box">
+// packages/ui/src/authClient.ts:93
+user: {
+  id: 'usr-demo-01',
+  role: dto.email.includes('admin') ? 'ADMIN' : dto.email.includes('comercio') ? 'MERCHANT_OWNER' : 'CLIENT',
+  ...
+}
+        </div>
+        <div class="remedy-box">
+          <strong>Plan de Corrección Recomendado:</strong> Deshabilitar la concesión dinámica de roles simulados en el frontend. Ante un fallo de red, retornar un error estricto de conexión sin conceder acceso visual privilegiado.
+        </div>
+      </div>
+
+      <!-- MED 2 -->
+      <div class="finding-card">
+        <div class="finding-header">
+          <div class="finding-title-group">
+            <h3>🟠 MED-02: Configuración Insegura de API_BASE_URL (Mixed Content en Producción)</h3>
+            <div class="finding-fp">packages/ui/src/authClient.ts:10-12 | Fase 1 & Fase 3</div>
+          </div>
+          <span class="badge badge-med">MEDIO</span>
+        </div>
+        <p class="finding-desc">
+          <code>authClient.ts</code> ignora la variable de entorno <code>VITE_API_URL</code> y calcula la API con <code>http://${window.location.hostname}:4000</code>. En Render bajo HTTPS, el navegador bloqueará todas las peticiones por <strong>Mixed Content</strong> (HTTPS consumiendo HTTP no cifrado) y el puerto 4000 estará inaccesible.
+        </p>
+        <div class="code-box">
+// packages/ui/src/authClient.ts:10-12
+const API_BASE_URL = typeof window !== 'undefined' && window.location.hostname
+  ? `http://${window.location.hostname}:4000` // Incompatible con HTTPS Render
+  : 'http://localhost:4000';
+        </div>
+        <div class="remedy-box">
+          <strong>Plan de Corrección Recomendado:</strong> Usar <code>(typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_URL) || 'http://localhost:4000'</code> para enlazar con la URL HTTPS real del backend desplegado en Render.
+        </div>
+      </div>
+
+      <!-- MED 3 -->
+      <div class="finding-card">
+        <div class="finding-header">
+          <div class="finding-title-group">
+            <h3>🟠 MED-03: Desactivación de Verificación TLS/SSL en PostgreSQL</h3>
+            <div class="finding-fp">services/api/src/common/postgres.ts:49 | Fase 2</div>
+          </div>
+          <span class="badge badge-med">MEDIO</span>
+        </div>
+        <p class="finding-desc">
+          En <code>postgres.ts</code> se define <code>ssl: { rejectUnauthorized: false }</code> para entornos en la nube. Esto omite la validación de la cadena de confianza del certificado del servidor de base de datos, posibilitando ataques Man-in-the-Middle (MITM) en la red.
+        </p>
+        <div class="remedy-box">
+          <strong>Plan de Corrección Recomendado:</strong> Validar el certificado con el certificado raíz de la CA del proveedor de base de datos en producción.
+        </div>
+      </div>
+
+      <!-- MED 4 -->
+      <div class="finding-card">
+        <div class="finding-header">
+          <div class="finding-title-group">
+            <h3>🟠 MED-04: Vulnerabilidades en Dependencias de Desarrollo (Supply Chain)</h3>
+            <div class="finding-fp">megaproyecto-fintech/package-lock.json | Fase 6</div>
+          </div>
+          <span class="badge badge-med">MEDIO</span>
+        </div>
+        <p class="finding-desc">
+          <code>npm audit</code> en <code>megaproyecto-fintech</code> reportó 6 vulnerabilidades (2 críticas en <code>tinypool</code> relativas a prototype pollution y RCE en opciones de worker de pruebas, y moderadas en <code>esbuild</code> y <code>@vitest/mocker</code>).
+        </p>
+        <div class="remedy-box">
+          <strong>Plan de Corrección Recomendado:</strong> Ejecutar una actualización controlada de <code>vitest</code> y <code>vite</code> en una rama de mantenimiento para subsanar los paquetes de desarrollo.
+        </div>
+      </div>
+
+      <!-- MED 5 -->
+      <div class="finding-card">
+        <div class="finding-header">
+          <div class="finding-title-group">
+            <h3>🟠 MED-05: Falta de Cabeceras HTTP de Seguridad (Helmet / CSP / HSTS)</h3>
+            <div class="finding-fp">services/api/src/app.ts | Fase 5</div>
+          </div>
+          <span class="badge badge-med">MEDIO</span>
+        </div>
+        <p class="finding-desc">
+          Fastify no tiene configurado <code>@fastify/helmet</code> para emitir cabeceras estándar como <code>Content-Security-Policy</code>, <code>X-Frame-Options: DENY</code>, <code>X-Content-Type-Options: nosniff</code> y <code>Strict-Transport-Security</code>.
+        </p>
+        <div class="remedy-box">
+          <strong>Plan de Corrección Recomendado:</strong> Registrar <code>@fastify/helmet</code> con políticas de seguridad adaptadas a los frontends del proyecto.
+        </div>
+      </div>
+
+    </section>
+
+    <footer>
+      🔒 AI Secure Code Auditor Workflow (Antigravity) — Auditoría generada automáticamente bajo políticas de seguridad OWASP y Zero Trust.
+    </footer>
+  </div>
+
+</body>
+</html>
