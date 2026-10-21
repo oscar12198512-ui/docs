@@ -87,11 +87,11 @@ DEPLOY RECOMENDADO: SÍ (DESPLIEGUE APROBADO)
 #### 6. MED-04: Vulnerabilidades Críticas en Dependencias de Desarrollo (Supply Chain)
 - **Archivo / Componente:** `megaproyecto-fintech/package.json` / `package-lock.json`
 - **Fase:** FASE 6 — Dependencias y Código Externo
-- **Nivel de Riesgo:** 🟠 MEDIO (Entorno de Construcción / CI/CD)
-- **Descripción del Problema:**
-  El comando `npm audit` dentro de `megaproyecto-fintech` detectó vulnerabilidades en paquetes de dev/test (`tinypool`, `esbuild`, `@vitest/mocker`).
-- **Impacto:** Si bien estas librerías pertenecen a herramientas de compilación y pruebas (`vitest`, `vite`), representan una advertencia en los pipelines de integración continua (CI/CD).
-- **Recomendación:** Actualización de dependencias de prueba en una rama de mantenimiento.
+- **Nivel de Riesgo:** 🟢 **RESUELTO Y VERIFICADO** (Antes 🟠 MEDIO)
+- **Estado de Corrección:** ✅ Mitigado con éxito. Se actualizaron `vitest` a `^4.1.12` en todos los workspaces y se configuraron `overrides` de seguridad en el `package.json` raíz del monorepo (`tinypool: ^2.2.0`, `esbuild: ^0.25.0`, `vite: ^6.4.5`, `@vitest/mocker: ^4.1.12`). Ejecución de `npm audit` confirmó 0 vulnerabilidades (0 críticas, 0 altas, 0 moderadas). Todo el monorepo compiló con éxito y pasó los 134 casos de prueba (100% de aprobación).
+- **Descripción Original del Problema:**
+  El comando `npm audit` dentro de `megaproyecto-fintech` detectó 6 vulnerabilidades en dependencias transitivas de desarrollo y compilación (`tinypool <=2.1.1`, `esbuild <=0.24.2`, `@vitest/mocker <=4.1.10`, `vite <=6.4.3`).
+
 
 ---
 
